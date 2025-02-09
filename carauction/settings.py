@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -134,3 +135,24 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+import environ
+import os
+
+# Define the base directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Initialize environment variables
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  # Explicitly load the .env file
+
+# Retrieve MPESA credentials
+MPESA_CONSUMER_KEY = env('MPESA_CONSUMER_KEY', default="NOT_SET")
+MPESA_CONSUMER_SECRET = env('MPESA_CONSUMER_SECRET', default="NOT_SET")
+MPESA_SHORTCODE = env('MPESA_SHORTCODE', default="NOT_SET")
+MPESA_PASSKEY = env('MPESA_PASSKEY', default="NOT_SET")
+
+MPESA_BASE_URL = "https://sandbox.safaricom.co.ke"  # Use production URL when live
+
+# Debugging: Print variables to confirm they are loaded
+print("MPESA_CONSUMER_KEY:", MPESA_CONSUMER_KEY)

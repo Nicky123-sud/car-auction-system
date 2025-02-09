@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Complete Payment</h2>
+    <p><strong>Amount:</strong> Ksh <span id="payment-amount"></span></p>
+    
+    <div class="mb-3">
+        <label>Enter M-Pesa Phone Number:</label>
+        <input type="text" class="form-control" id="phone-number" placeholder="07XXXXXXXX">
+    </div>
+    
+    <button id="pay-btn" class="btn btn-primary">Pay Now</button>
+    
+    <p id="payment-status"></p>
+</div>
+
+<script>
+document.getElementById("pay-btn").addEventListener("click", function () {
+    let phoneNumber = document.getElementById("phone-number").value;
+    let amount = document.getElementById("payment-amount").innerText;
+    
+    fetch(`/api/mpesa/stk-push/?phone_number=${phoneNumber}&amount=${amount}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ResponseCode === "0") {
+                document.getElementById("payment-status").innerText = "Payment request sent. Approve on your phone.";
+            } else {
+                document.getElementById("payment-status").innerText = "Payment failed. Try again.";
+            }
+        })
+        .catch(error => console.log(error));
+});
+</script>
+{% endblock %}
+
+
+{#✅ User enters their phone number#}
+{#✅ Clicks "Pay Now" to trigger M-Pesa STK Push#}
+{#✅ Receives confirmation on payment success/failure#}

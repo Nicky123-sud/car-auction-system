@@ -16,7 +16,11 @@ from .serializers import (
     PaymentSerializer,
     VehicleSerializer
 )
-
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Bid, Vehicle
+from .serializers import BidSerializer
 
 
 # ✅ Endpoints:
@@ -93,3 +97,26 @@ class PaymentViewSet(viewsets.ModelViewSet):
         serializer.save(seller=self.request.user)
 
 
+# ✅ Prevents users from bidding lower than the highest bid
+# ✅ Saves bids in the database
+# ✅ Returns updated highest bid
+@api_view(["GET"])
+def get_highest_bid(request):
+    vehicle_id = request.GET.get("vehicle")
+    highest_bid = Bid.objects.filter(vehicle_id=vehicle_id).order_by("-amount").first()
+    if highest_bid:
+        return Response({"amount": highest_bid.amount})
+    return Response({"amount": None})
+
+@api_view(["POST"])
+def place_bid(request):
+    user = request.user
+    vehicle = get_object_or_404(Vehicle, id=request.data["Vehicle"])
+    amount = request.data["amount"]
+
+    highest_bid = Bid.objects.filter(vehicle=vehicle).order_by("-amount").first()
+    if highest_bid and amount <= highest_bid.amount:
+        return Response({"error": "Bid must be higher than the current highest bid."}, status=400)
+
+    bid = Bid.objects.create(user=user, vehicle=vehicle, amount=amount)
+    return Response({"message": "Bid placed successfully!", "amount":bid.amount})
