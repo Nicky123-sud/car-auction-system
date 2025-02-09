@@ -1,0 +1,29 @@
+# Ignore Python virtual environment
+venv/
+env/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignore database files
+*.sqlite3
+
+# Ignore Django secret key and environment files
+.env
+*.env
+
+# Ignore logs and system files
+*.log
+*.pid
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Ignore migrations (optional)
+**/migrations/*.py
+**/migrations/*.pyc
