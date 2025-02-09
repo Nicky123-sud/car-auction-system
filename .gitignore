@@ -1,6 +1,7 @@
 # Ignore Python virtual environment
 venv/
 env/
+carauction_env/
 
 # Ignore compiled Python files
 *.pyc
@@ -27,3 +28,6 @@ __pycache__/
 # Ignore migrations (optional)
 **/migrations/*.py
 **/migrations/*.pyc
+
+
+*.zip
