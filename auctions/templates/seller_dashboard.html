@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Seller Dashboard</h2>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total Listings</h5>
+                    <h2 id="total-listings">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Sold Vehicles</h5>
+                    <h2 id="sold-vehicles">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Active Auctions</h5>
+                    <h2 id="active-auctions">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="sellerChart" width="400" height="200"></canvas>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/api/seller/dashboard-stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("total-listings").innerText = data.total_listings;
+            document.getElementById("sold-vehicles").innerText = data.sold_vehicles;
+            document.getElementById("active-auctions").innerText = data.active_auctions;
+
+            let ctx = document.getElementById('sellerChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ["Total Listings", "Sold Vehicles", "Active Auctions"],
+                    datasets: [{
+                        label: 'Seller Stats',
+                        data: [data.total_listings, data.sold_vehicles, data.active_auctions],
+                        backgroundColor: ['blue', 'red', 'green']
+                    }]
+                }
+            });
+        });
+});
+</script>
+{% endblock %}
+
+
+{% comment %} 
+✅ Displays seller's vehicle statistics
+✅ Uses Chart.js to show sales and active listings {% endcomment %}

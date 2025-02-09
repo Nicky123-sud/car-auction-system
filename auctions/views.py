@@ -21,7 +21,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Bid, Vehicle
 from .serializers import BidSerializer
-
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models import Count, Sum
+from .models import Vehicle, Bid, Payment, User
 
 # ✅ Endpoints:
 #
@@ -120,3 +123,40 @@ def place_bid(request):
 
     bid = Bid.objects.create(user=user, vehicle=vehicle, amount=amount)
     return Response({"message": "Bid placed successfully!", "amount":bid.amount})
+
+
+
+# ✅ Fetches auction statistics dynamically
+# ✅ Returns JSON data for frontend visualization
+@login_required
+def admin_dashboard_stats(request):
+    total_users = User.objects.count()
+    total_vehicles = Vehicle.objects.count()
+    active_auctions = Vehicle.objects.filter(status="active").count()
+    total_revenue = Payment.objects.aggregate(Sum("amount"))["amount__sum"] or 0
+
+    stats = {
+        "total_users": total_users,
+        "total_vehicles": total_vehicles,
+        "active_auctions": active_auctions,
+        "total_revenue": total_revenue,
+    }
+    
+    return JsonResponse(stats)
+
+@login_required
+def seller_dashboard_stats(request):
+    seller_vehicles = Vehicle.objects.filter(seller=request.user)
+    total_listings = seller_vehicles.count()
+    sold_vehicles = seller_vehicles.filter(status="sold").count()
+    active_auctions = seller_vehicles.filter(status="active").count()
+
+    stats = {
+        "total_listings": total_listings,
+        "sold_vehicles": sold_vehicles,
+        "active_auctions": active_auctions,
+    }
+    
+    return JsonResponse(stats)
+
+

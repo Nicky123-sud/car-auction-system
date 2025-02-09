@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Admin Dashboard</h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h2 id="total-users">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total Vehicles</h5>
+                    <h2 id="total-vehicles">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Active Auctions</h5>
+                    <h2 id="active-auctions">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total Revenue</h5>
+                    <h2>Ksh <span id="total-revenue">0</span></h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="auctionChart" width="400" height="200"></canvas>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/api/admin/dashboard-stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("total-users").innerText = data.total_users;
+            document.getElementById("total-vehicles").innerText = data.total_vehicles;
+            document.getElementById("active-auctions").innerText = data.active_auctions;
+            document.getElementById("total-revenue").innerText = data.total_revenue;
+
+            let ctx = document.getElementById('auctionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ["Users", "Vehicles", "Active Auctions", "Revenue"],
+                    datasets: [{
+                        label: 'Auction Stats',
+                        data: [data.total_users, data.total_vehicles, data.active_auctions, data.total_revenue],
+                        backgroundColor: ['blue', 'green', 'orange', 'red']
+                    }]
+                }
+            });
+        });
+});
+</script>
+{% endblock %}
+
+
+{% comment %} ✅ Displays auction statistics in cards
+✅ Uses Chart.js to visualize auction data {% endcomment %}

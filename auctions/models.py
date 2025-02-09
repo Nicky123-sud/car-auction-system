@@ -15,6 +15,7 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.user_type})"
 
+
 # Vehicle Model
 class Vehicle(models.Model):
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
@@ -26,6 +27,12 @@ class Vehicle(models.Model):
     image = models.ImageField(upload_to='vehicles_images/', null=True, blank=True)
     auction_end_time = models.DateTimeField()
     description = models.TextField()
+    
+    status = models.CharField(
+        max_length=20,
+        choices=[("active", "Active"), ("sold", "Sold"), ("expired", "Expired")],
+        default="active",
+    )
 
     def __str__(self):
         return f"{self.make} {self.model} ({self.year}) - Seller: {self.seller.username}"
