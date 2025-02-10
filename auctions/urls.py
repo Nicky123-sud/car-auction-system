@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import RegisterView, LoginView, VehicleViewSet, BidViewSet, PaymentViewSet
 from django.urls import path
 from .views import admin_dashboard_stats, seller_dashboard_stats
+from .views import place_bid, buy_now
 
 router = DefaultRouter()
 router.register(r'vehicles', VehicleViewSet)
@@ -34,7 +35,10 @@ urlpatterns = [
     path('', include(router.urls)),
     path("admin-dashboard/", admin_dashboard_stats, name="admin-dashboard"),
     path("seller-dashboard/", seller_dashboard_stats, name="seller-dashboard"),
+    path("bid/<int:vehicle_id>/", place_bid, name="place-bid"),
+    path("buy-now/<int:vehicle_id>/", buy_now, name="buy-now"),
 ]
+
 
 
 

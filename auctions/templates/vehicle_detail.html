@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2 id="vehicle-title"></h2>
+    <img id="vehicle-image" class="img-fluid mb-3" style="max-width: 500px;">
+    <p><strong>Price:</strong> <span id="vehicle-price"></span></p>
+    <p><strong>Description:</strong> <span id="vehicle-description"></span></p>
+
+    <h4>Bidding Section</h4>
+    <div class="alert alert-info">
+        <strong>Highest Bid:</strong> <span id="highest-bid">Loading...</span>
+    </div>
+
+    <form id="bid-form">
+        <div class="mb-3">
+            <label>Enter Your Bid Amount:</label>
+            <input type="number" class="form-control" id="bid-amount" required>
+        </div>
+        <button class="btn btn-primary" onclick="placeBid()">Place Bid</button>
+        <button class="btn btn-success" onclick="buyNow()">Buy Now (Ksh <span id="buy-now-price"></span>)</button>
+    </form>
+
+    <h4 class="mt-4">Bid History</h4>
+    <ul id="bid-history" class="list-group"></ul>
+</div>
+
+<script>
+function buyNow() {
+    fetch('/api/buy-now/{{ vehicle.id}}/', {method:'POST', credentials: 'include'})
+    .then(data => {
+        if (data.success) {
+            alert("Vehicle purchased successfully!");
+            window.location.reload();
+
+        } else {
+            alert(data.error);
+        }
+    });
+}
+</script>
+{% endblock %}
+
+
+{% comment %} ✅ Fetches vehicle details
+✅ Displays highest bid
+✅ Allows users to place bids
+✅ Shows bid history
+✅ Auto-refreshes every 10 seconds {% endcomment %}

@@ -1,5 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User
+from django.utils.timezone import now
+from django.db.models import Max
+from django.http import JsonResponse
+from .models import Vehicle, Bid
+
+
+
 # Create your models here.
 class User(AbstractUser):
     USER_TYPES = (
@@ -27,6 +34,13 @@ class Vehicle(models.Model):
     image = models.ImageField(upload_to='vehicles_images/', null=True, blank=True)
     auction_end_time = models.DateTimeField()
     description = models.TextField()
+    seller = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    current_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    buy_now_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # For "Buy Now" Option
+    auction_end_time = models.DateTimeField()
+    
     
     status = models.CharField(
         max_length=20,
@@ -44,11 +58,19 @@ class Bid(models.Model):
     bidder = models.ForeignKey(User, on_delete=models.CASCADE)
     bid_amount = models.DecimalField(max_digits=10, decimal_places=2)
     bid_time = models.DateTimeField(auto_now_add=True)
+    bidder = models.ForeignKey(User, on_delete=models.CASCADE)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    max_bid_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Proxy Bidding
 
     def __str__(self):
         return f"{self.bidder.username} - Amount: {self.bid_amount} on {self.vehicle}"
 
+    def __str__(self):
+        return f"{self.bidder} - {self.vehicle.title} - {self.amount}"
 
+# ✅ Stores max bid amount for proxy bidding.
+# ✅ Adds "Buy Now" price to vehicles.
 # After an auction ends the winning bidder must make a payment
 
 class Payment(models.Model):
@@ -61,3 +83,40 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment of {self.amount} for {self.vehicle} - {self.payment_status}"
+    
+    
+    
+    
+def place_bid(request, vehicle_id):
+    user = request.user
+    amount = float(request.POST.get("amount"))
+    max_bid_amount = float(request.POST.get("max_bid_amount", amount))  # Default to normal bid if not set
+
+    vehicle = Vehicle.objects.get(id=vehicle_id)
+
+    if now() > vehicle.auction_end_time:
+        return JsonResponse({"error": "Auction has ended."}, status=400)
+
+    # Get the current highest bid
+    highest_bid = Bid.objects.filter(vehicle=vehicle).aggregate(Max("amount"))["amount__max"] or vehicle.current_price
+
+    if amount < highest_bid:
+        return JsonResponse({"error": "Bid must be higher than the current highest bid."}, status=400)
+
+    # Place the bid
+    bid = Bid.objects.create(bidder=user, vehicle=vehicle, amount=amount, max_bid_amount=max_bid_amount)
+
+    # Automatically bid up to max_bid_amount
+    competing_bids = Bid.objects.filter(vehicle=vehicle).exclude(bidder=user).order_by("-max_bid_amount")
+
+    if competing_bids.exists():
+        top_competing_bid = competing_bids.first()
+        new_auto_bid = min(top_competing_bid.max_bid_amount + 1, max_bid_amount)
+        if new_auto_bid > highest_bid:
+            Bid.objects.create(bidder=user, vehicle=vehicle, amount=new_auto_bid)
+
+    # Update vehicle price
+    vehicle.current_price = Bid.objects.filter(vehicle=vehicle).aggregate(Max("amount"))["amount__max"]
+    vehicle.save()
+
+    return JsonResponse({"success": "Bid placed successfully!", "new_price": vehicle.current_price})

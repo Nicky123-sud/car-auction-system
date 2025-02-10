@@ -159,4 +159,26 @@ def seller_dashboard_stats(request):
     
     return JsonResponse(stats)
 
+# ✅ Allows instant purchases.
+# ✅ Ends the auction immediately.
+def buy_now(request, vehicle_id):
+    user = request.user
+    vehicle = Vehicle.objects.get(id=vehicle_id)
+
+    if not vehicle.buy_now_price:
+        return JsonResponse({"error": "Buy Now is not available for this auction."}, status=400)
+
+    if now() > vehicle.auction_end_time:
+        return JsonResponse({"error": "Auction has ended."}, status=400)
+
+    # Finalize purchase
+    vehicle.current_price = vehicle.buy_now_price
+    vehicle.status = "sold"
+    vehicle.save()
+
+    return JsonResponse({"success": "Vehicle purchased successfully!", "final_price": vehicle.buy_now_price})
+
+
+
+
 
