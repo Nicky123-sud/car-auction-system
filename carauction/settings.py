@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'auctions',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {

@@ -1,9 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, User
+from django.contrib.auth.models import AbstractUser
 from django.utils.timezone import now
 from django.db.models import Max
 from django.http import JsonResponse
-from .models import Vehicle, Bid
+# from .models import Vehicle, Bid
 
 
 
@@ -26,6 +26,7 @@ class User(AbstractUser):
 # Vehicle Model
 class Vehicle(models.Model):
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
+    
     make = models.CharField(max_length=100)
     model = models.CharField(max_length=100)
     year = models.IntegerField()
@@ -34,12 +35,10 @@ class Vehicle(models.Model):
     image = models.ImageField(upload_to='vehicles_images/', null=True, blank=True)
     auction_end_time = models.DateTimeField()
     description = models.TextField()
-    seller = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    description = models.TextField()
+    title = models.CharField(max_length=255, default="Default Title")
     current_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     buy_now_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # For "Buy Now" Option
-    auction_end_time = models.DateTimeField()
+    is_sold = models.BooleanField(default=False)  # Track if the vehicle is sold
     
     
     status = models.CharField(
@@ -58,9 +57,9 @@ class Bid(models.Model):
     bidder = models.ForeignKey(User, on_delete=models.CASCADE)
     bid_amount = models.DecimalField(max_digits=10, decimal_places=2)
     bid_time = models.DateTimeField(auto_now_add=True)
-    bidder = models.ForeignKey(User, on_delete=models.CASCADE)
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # bidder = models.ForeignKey(User, on_delete=models.CASCADE)
+    # vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    # amount = models.DecimalField(max_digits=10, decimal_places=2)
     max_bid_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Proxy Bidding
 
     def __str__(self):

@@ -1,4 +1,6 @@
 from django.contrib.auth import authenticate
+from django.utils.timezone import now
+
 from django.shortcuts import render
 from rest_framework import generics, status, viewsets, permissions
 from rest_framework.response import Response
@@ -161,24 +163,37 @@ def seller_dashboard_stats(request):
 
 # ✅ Allows instant purchases.
 # ✅ Ends the auction immediately.
+from django.http import JsonResponse
+from django.utils.timezone import now
+from django.contrib.auth.decorators import login_required
+from .models import Vehicle
+
+@login_required
 def buy_now(request, vehicle_id):
-    user = request.user
-    vehicle = Vehicle.objects.get(id=vehicle_id)
+    try:
+        user = request.user
+        vehicle = Vehicle.objects.get(id=vehicle_id)
 
-    if not vehicle.buy_now_price:
-        return JsonResponse({"error": "Buy Now is not available for this auction."}, status=400)
+        # Check if the vehicle is already sold
+        if vehicle.is_sold:
+            return JsonResponse({"error": "This vehicle is already sold."}, status=400)
 
-    if now() > vehicle.auction_end_time:
-        return JsonResponse({"error": "Auction has ended."}, status=400)
+        # Check if "Buy Now" price exists
+        if not vehicle.buy_now_price:
+            return JsonResponse({"error": "Buy Now option is not available for this auction."}, status=400)
 
-    # Finalize purchase
-    vehicle.current_price = vehicle.buy_now_price
-    vehicle.status = "sold"
-    vehicle.save()
+        # Check if the auction has ended
+        if now() > vehicle.auction_end_time:
+            return JsonResponse({"error": "The auction has already ended."}, status=400)
 
-    return JsonResponse({"success": "Vehicle purchased successfully!", "final_price": vehicle.buy_now_price})
+        # Mark the vehicle as sold and finalize purchase
+        vehicle.is_sold = True
+        vehicle.current_price = vehicle.buy_now_price
+        vehicle.save()
 
+        return JsonResponse({"success": True, "message": "Vehicle purchased successfully!", "final_price": vehicle.buy_now_price})
 
-
-
-
+    except Vehicle.DoesNotExist:
+        return JsonResponse({"error": "Vehicle not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
