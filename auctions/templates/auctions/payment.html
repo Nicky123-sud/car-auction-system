@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Payment | Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Complete Your Payment</h2>
+    <div class="card p-4 mt-4 shadow-lg">
+        <p class="text-center">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/M-Pesa_logo.svg/2560px-M-Pesa_logo.svg.png"
+                 alt="M-Pesa Logo" style="max-width: 150px;">
+        </p>
+        <p class="text-center">Pay securely using M-Pesa</p>
+        <form id="paymentForm">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="phone" class="form-label">M-Pesa Phone Number</label>
+                <input type="text" class="form-control" id="phone" name="phone" placeholder="e.g., 254712345678" required>
+                <small class="text-danger d-none" id="phone-error">Invalid phone number format!</small>
+            </div>
+
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount (KSh)</label>
+                <input type="number" class="form-control" id="amount" name="amount" value="{{ amount }}" readonly>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100" id="pay-btn">
+                Pay Now
+            </button>
+
+            <!-- Loading Indicator -->
+            <div class="text-center mt-3 d-none" id="loading">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Processing Payment...</span>
+                </div>
+                <p>Processing payment...</p>
+            </div>
+
+            <div class="alert mt-3 d-none" id="paymentMessage"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("paymentForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        let phone = document.getElementById("phone").value;
+        let amount = document.getElementById("amount").value;
+        let phoneError = document.getElementById("phone-error");
+        let payButton = document.getElementById("pay-btn");
+        let loadingIndicator = document.getElementById("loading");
+        let messageBox = document.getElementById("paymentMessage");
+
+        if (!/^2547\d{8}$/.test(phone)) {
+            phoneError.classList.remove("d-none");
+            return;
+        } else {
+            phoneError.classList.add("d-none");
+        }
+
+        // Disable button and show loading
+        payButton.disabled = true;
+        loadingIndicator.classList.remove("d-none");
+
+        fetch("{% url 'process_payment' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `phone=${phone}&amount=${amount}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingIndicator.classList.add("d-none");
+            payButton.disabled = false;
+            messageBox.classList.remove("d-none", "alert-danger");
+            messageBox.classList.add("alert-success");
+            messageBox.textContent = data.message || "Payment request sent!";
+        })
+        .catch(error => {
+            loadingIndicator.classList.add("d-none");
+            payButton.disabled = false;
+            messageBox.classList.remove("d-none", "alert-success");
+            messageBox.classList.add("alert-danger");
+            messageBox.textContent = "Payment failed! Try again.";
+        });
+    });
+</script>
+{% endblock %}

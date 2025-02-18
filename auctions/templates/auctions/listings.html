@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Vehicle Listings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Available Vehicles for Auction</h2>
+    
+    <!-- Search and Filter Bar -->
+    <div class="row justify-content-center my-4">
+        <div class="col-md-8">
+            <form id="search-form" method="GET" action="">
+                <div class="input-group mb-2">
+                    <input type="text" id="search-query" name="q" class="form-control" placeholder="Search vehicles..." value="{{ request.GET.q }}">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <select class="form-select" name="make" id="filter-make">
+                            <option value="">Filter by Make</option>
+                            {% for make in unique_makes %}
+                                <option value="{{ make }}">{{ make }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" name="auction_type" id="filter-auction-type">
+                            <option value="">Filter by Auction Type</option>
+                            <option value="english">English Auction</option>
+                            <option value="dutch">Dutch Auction</option>
+                            <option value="sealed">Sealed Bid</option>
+                            <option value="buy_now">Buy Now</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="number" name="max_price" class="form-control" placeholder="Max Price (KSh)">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Listings -->
+    <div class="row" id="vehicle-list">
+        {% for vehicle in vehicles %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="{{ vehicle.image.url }}" class="card-img-top" alt="{{ vehicle.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ vehicle.title }}</h5>
+                    <p class="card-text">Starting Bid: <strong>KES {{ vehicle.starting_bid }}</strong></p>
+                    <p class="card-text">Current Bid: <strong id="bid-{{ vehicle.id }}">KES {{ vehicle.current_bid }}</strong></p>
+                    <p class="card-text"><small class="text-muted">Auction ends on {{ vehicle.auction_end|date:"M d, Y H:i" }}</small></p>
+                    <a href="{% url 'auction_detail' vehicle.id %}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center">No vehicles available for auction.</p>
+        {% endfor %}
+    </div>
+
+    <h2 class="text-center">Create a New Vehicle Listing</h2>
+    <div class="card p-4 mt-4 shadow-lg">
+        <form method="POST" action="{% url 'create_listing' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="title" class="form-label">Vehicle Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="make" class="form-label">Make</label>
+                    <input type="text" class="form-control" id="make" name="make" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="model" class="form-label">Model</label>
+                    <input type="text" class="form-control" id="model" name="model" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="year" class="form-label">Year</label>
+                    <input type="number" class="form-control" id="year" name="year" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="price" class="form-label">Starting Bid Price (KSh)</label>
+                    <input type="number" class="form-control" id="price" name="price" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="auction_type" class="form-label">Auction Type</label>
+                <select class="form-control" id="auction_type" name="auction_type" required>
+                    <option value="english">English Auction</option>
+                    <option value="dutch">Dutch Auction</option>
+                    <option value="sealed">Sealed Bid</option>
+                    <option value="buy_now">Buy Now</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="auction_end" class="form-label">Auction End Date & Time</label>
+                <input type="datetime-local" class="form-control" id="auction_end" name="auction_end" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="image" class="form-label">Upload Vehicle Images</label>
+                <input type="file" class="form-control" id="image" name="image" multiple required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">Submit Listing</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("search-form").addEventListener("submit", function(event) {
+        event.preventDefault();
+        let query = document.getElementById("search-query").value;
+        fetch(`/search/?q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("vehicle-list").innerHTML = data.html;
+            });
+    });
+</script>
+{% endblock %}

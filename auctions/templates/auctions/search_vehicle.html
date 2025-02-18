@@ -1,0 +1,58 @@
+<!-- search_vehicle.html -->
+{% extends 'base.html' %}
+{% block title %}Search Vehicles | Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Search Vehicles</h2>
+
+    <!-- Search Form -->
+    <form method="GET" action="{% url 'search_vehicle' %}" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <input type="text" name="q" class="form-control" placeholder="Search by title, make, or model" value="{{ request.GET.q }}">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="min_price" class="form-control" placeholder="Min Price" value="{{ request.GET.min_price }}">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="max_price" class="form-control" placeholder="Max Price" value="{{ request.GET.max_price }}">
+            </div>
+            <div class="col-md-2">
+                <select name="year" class="form-control">
+                    <option value="">Select Year</option>
+                    {% for year in years %}
+                        <option value="{{ year }}" {% if request.GET.year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Search Results -->
+    {% if vehicles %}
+        <div class="row">
+            {% for vehicle in vehicles %}
+            <div class="col-md-4 mb-4">
+                <div class="card shadow">
+                    <img src="{{ vehicle.image.url }}" class="card-img-top" alt="{{ vehicle.title }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ vehicle.title }}</h5>
+                        <p class="card-text"><strong>Make:</strong> {{ vehicle.make }}</p>
+                        <p class="card-text"><strong>Model:</strong> {{ vehicle.model }}</p>
+                        <p class="card-text"><strong>Year:</strong> {{ vehicle.year }}</p>
+                        <p class="card-text"><strong>Price:</strong> KSh {{ vehicle.price }}</p>
+                        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-info w-100">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center">No vehicles found matching your criteria.</div>
+    {% endif %}
+</div>
+{% endblock %}

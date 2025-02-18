@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ vehicle.title }}</h2>
+    <img id="vehicle-image" class="img-fluid mb-3" style="max-width: 500px;">
+    <p><strong>Price:</strong> <span id="vehicle-price">{{ vehicle.price }}</span></p>
+    <p><strong>Description:</strong> <span id="vehicle-description">{{ vehicle.description }}</span></p>
+    
+    {% if vehicle.is_sold %}
+        <span class="badge bg-danger">Sold</span>
+        <p>This vehicle has been sold.</p>
+    {% else %}
+        <p><strong>Current Bid:</strong> Ksh {{ vehicle.current_price }}</p>
+        <p><strong>Buy Now Price:</strong> Ksh {{ vehicle.buy_now_price }}</p>
+
+        <h4>Bidding Section</h4>
+        <div class="alert alert-info">
+            <strong>Highest Bid:</strong> <span id="highest-bid">Loading...</span>
+        </div>
+
+        <form id="bid-form">
+            <div class="mb-3">
+                <label>Enter Your Bid Amount:</label>
+                <input type="number" class="form-control" id="bid-amount" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Place Bid</button>
+            <button type="button" class="btn btn-success" id="buy-now-btn">Buy Now (Ksh <span id="buy-now-price">{{ vehicle.buy_now_price }}</span>)</button>
+        </form>
+
+        <h4 class="mt-4">Bid History</h4>
+        <ul id="bid-history" class="list-group"></ul>
+    {% endif %}   
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Buy Now Button
+        const buyNowBtn = document.getElementById("buy-now-btn");
+        if (buyNowBtn) {
+            buyNowBtn.addEventListener("click", function () {
+                if (confirm("Are you sure you want to buy this vehicle now?")) {
+                    fetch(`/vehicle/{{ vehicle.id }}/buy-now/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCSRFToken(),
+                        },
+                        credentials: "include",
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Purchase successful!");
+                            window.location.reload();
+                        } else {
+                            alert("Error: " + data.error);
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+                }
+            });
+        }
+
+        // Handles bid form submission
+        const bidForm = document.getElementById("bid-form");
+        if (bidForm) {
+            bidForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                const bidAmount = document.getElementById("bid-amount").value;
+                fetch(`/vehicle/{{ vehicle.id }}/place-bid`, {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        'bid_amount': bidAmount
+                    }),
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                    },
+                    credentials: 'include',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Bid placed successfully!");
+                        window.location.reload();
+                    } else {
+                        alert("Error: " + data.error);
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        }
+
+        // Auto-refresh bid details and history every 10 seconds
+        setInterval(function () {
+            fetch(`/api/highest-bid/{{ vehicle.id }}/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("highest-bid").innerText = data.highest_bid;
+                });
+
+            fetch(`/api/bid-history/{{ vehicle.id }}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const bidHistoryList = document.getElementById("bid-history");
+                    bidHistoryList.innerHTML = "";
+                    data.bids.forEach(bid => {
+                        const li = document.createElement("li");
+                        li.classList.add("list-group-item");
+                        li.innerText = `${bid.user} placed a bid of Ksh ${bid.amount} on ${bid.timestamp}`;
+                        bidHistoryList.appendChild(li);
+                    });
+                });
+        }, 10000);  // Auto-refresh every 10 seconds
+    });
+
+    // Function to get CSRF Token from cookies
+    function getCSRFToken() {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].trim();
+            if (cookie.startsWith("csrftoken=")) {
+                return cookie.split("=")[1];
+            }
+        }
+        return "";
+    }
+</script>
+
+{% endblock %}
+
+
+
+{% comment %} ✅ Fetches vehicle details
+✅ Displays highest bid
+✅ Allows users to place bids
+✅ Shows bid history
+✅ Auto-refreshes every 10 seconds {% endcomment %}

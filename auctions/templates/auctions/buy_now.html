@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buy Now - Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Vehicle Images Carousel -->
+            <div id="vehicleImagesCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% for image in vehicle.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ image.url }}" class="d-block w-100" alt="Vehicle Image">
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#vehicleImagesCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#vehicleImagesCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-3">{{ vehicle.name }}</h2>
+            <h5 class="text-muted">{{ vehicle.model }} - {{ vehicle.year }}</h5>
+            <p class="lead text-success fw-bold">Price: Ksh {{ vehicle.buy_now_price }}</p>
+            <p><strong>Condition:</strong> {{ vehicle.condition }}</p>
+            <p><strong>Mileage:</strong> {{ vehicle.mileage }} km</p>
+            <p><strong>Location:</strong> {{ vehicle.location }}</p>
+
+            {% if vehicle.is_sold %}
+                <p class="text-danger fw-bold">This vehicle has already been sold.</p>
+            {% else %}
+                <form method="POST" action="{% url 'process_buy_now' vehicle.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Click to purchase the vehicle instantly">Buy Now</button>
+                </form>
+            {% endif %}
+
+            <a href="{% url 'listings' %}" class="btn btn-outline-secondary mt-3 w-100">Back to Listings</a>
+        </div>
+    </div>
+
+    <!-- Ratings & Reviews Section -->
+    <div class="mt-4">
+        <h4>Ratings & Reviews</h4>
+        {% if vehicle.reviews %}
+            <ul class="list-group">
+                {% for review in vehicle.reviews.all %}
+                    <li class="list-group-item">
+                        <strong>{{ review.user.username }}:</strong> {{ review.comment }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No reviews yet. Be the first to review this vehicle!</p>
+        {% endif %}
+    </div>
+
+    <!-- Payment Integration Section -->
+    <div class="mt-5">
+        <h4>Payment Options</h4>
+        <p>Pay instantly using M-Pesa. A payment request will be sent to your registered M-Pesa number.</p>
+        <button class="btn btn-success w-100" id="mpesaPayBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Pay using M-Pesa">Pay with M-Pesa</button>
+    </div>
+
+    <!-- Estimated Delivery Section -->
+    <div class="mt-3">
+        <h5>Estimated Delivery</h5>
+        <p>Once you make the purchase, your vehicle will be delivered within 7-10 business days.</p>
+    </div>
+</div>
+
+<script>
+    // Initialize Tooltips
+    var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // M-Pesa Payment Button (Simulated)
+    document.getElementById("mpesaPayBtn").addEventListener("click", function() {
+        var paymentButton = document.getElementById("mpesaPayBtn");
+        paymentButton.disabled = true;
+        paymentButton.innerHTML = "Processing...";
+
+        // Simulate payment process
+        setTimeout(function() {
+            alert("M-Pesa payment feature coming soon!");
+            paymentButton.disabled = false;
+            paymentButton.innerHTML = "Pay with M-Pesa";
+        }, 2000);  // Adjust time as necessary
+    });
+</script>
+
+{% endblock %}

@@ -4,8 +4,9 @@ from django.utils.timezone import now
 from django.db.models import Max
 from django.http import JsonResponse
 # from .models import Vehicle, Bid
+from django.contrib.auth.models import User
 
-
+from django.db import models
 
 # Create your models here.
 class User(AbstractUser):
@@ -53,9 +54,10 @@ class Vehicle(models.Model):
 # Bid Model
 
 class Bid(models.Model):
+
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='bids')
     bidder = models.ForeignKey(User, on_delete=models.CASCADE)
-    bid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     bid_time = models.DateTimeField(auto_now_add=True)
     # bidder = models.ForeignKey(User, on_delete=models.CASCADE)
     # vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
@@ -119,3 +121,55 @@ def place_bid(request, vehicle_id):
     vehicle.save()
 
     return JsonResponse({"success": "Bid placed successfully!", "new_price": vehicle.current_price})
+
+
+
+class Listing(models.Model):
+    title = models.CharField(max_length=200)
+    make = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
+    year = models.IntegerField()
+    mileage = models.IntegerField()
+    description = models.TextField()
+    starting_price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='listings/', null=True, blank=True)
+    is_sold = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=[('Available', 'Available'), ('Sold', 'Sold')], default='Available')
+    seller = models.ForeignKey('auth.User', on_delete=models.CASCADE)  # Assuming you use the default User model
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('bid', 'Bid Activity'),
+        ('payment', 'Payment'),
+        ('system', 'System Alert'),
+        ('message', 'Message'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES, default='system')
+    url = models.URLField(blank=True, null=True, help_text="Optional URL to redirect when clicked.")
+    deleted = models.BooleanField(default=False)  # Soft deletion
+
+    class Meta:
+        ordering = ['-timestamp']  # Show latest notifications first
+
+    def __str__(self):
+        return f"{self.user.username} - {self.title} ({self.get_notification_type_display()})"
+
+    def mark_as_read(self):
+        """ Marks a notification as read """
+        self.is_read = True
+        self.save()
+
+    def delete_notification(self):
+        """ Soft delete instead of permanent removal """
+        self.deleted = True
+        self.save()

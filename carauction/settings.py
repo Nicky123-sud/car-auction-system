@@ -1,3 +1,4 @@
+
 """
 Django settings for carauction project.
 
@@ -12,10 +13,16 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import environ
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+
+# Initialized environment variables
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  # Explicitly load the .env file
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -42,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_extensions',
+    'debug_toolbar',
 ]
 
 REST_FRAMEWORK = {
@@ -58,6 +66,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+
 ]
 
 ROOT_URLCONF = 'carauction.urls'
@@ -65,7 +76,7 @@ ROOT_URLCONF = 'carauction.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -78,6 +89,8 @@ TEMPLATES = [
     },
 ]
 
+INTERNAL_IPS = ["127.0.0.1"]
+
 WSGI_APPLICATION = 'carauction.wsgi.application'
 
 
@@ -87,11 +100,11 @@ WSGI_APPLICATION = 'carauction.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'car_auction_db',  # Your MySQL database name
-        'USER': 'root',  # Default MySQL user in WAMP
-        'PASSWORD': '',  # Leave empty if no password
-        'HOST': '127.0.0.1',  # Localhost
-        'PORT': '3306',  # Default MySQL port
+        'NAME': 'car_auction_db',  
+        'USER': 'root',  
+        'PASSWORD': '',  
+        'HOST': '127.0.0.1',  
+        'PORT': '3306',  
     }
 }
 
@@ -126,26 +139,27 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'), 
+]
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+
+# For user-uploaded files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+INTERNAL_IPS = ["127.0.0.1"]
 
-import environ
-import os
 
-# Define the base directory
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Initialize environment variables
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  # Explicitly load the .env file
 
 # Retrieve MPESA credentials
 MPESA_CONSUMER_KEY = env('MPESA_CONSUMER_KEY', default="NOT_SET")

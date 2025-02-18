@@ -1,0 +1,63 @@
+<!-- create_listing.html -->
+{% extends 'base.html' %}
+{% block title %}Create Listing | Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Create a New Vehicle Listing</h2>
+    <div class="card p-4 mt-4 shadow-lg">
+        <form method="POST" action="{% url 'create_listing' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="title" class="form-label">Vehicle Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="make" class="form-label">Make</label>
+                    <input type="text" class="form-control" id="make" name="make" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="model" class="form-label">Model</label>
+                    <input type="text" class="form-control" id="model" name="model" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="year" class="form-label">Year</label>
+                    <input type="number" class="form-control" id="year" name="year" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="price" class="form-label">Starting Bid Price (KSh)</label>
+                    <input type="number" class="form-control" id="price" name="price" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="auction_type" class="form-label">Auction Type</label>
+                <select class="form-control" id="auction_type" name="auction_type" required>
+                    <option value="english">English Auction</option>
+                    <option value="dutch">Dutch Auction</option>
+                    <option value="sealed">Sealed Bid</option>
+                    <option value="buy_now">Buy Now</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="image" class="form-label">Upload Vehicle Image</label>
+                <input type="file" class="form-control" id="image" name="image" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Submit Listing</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

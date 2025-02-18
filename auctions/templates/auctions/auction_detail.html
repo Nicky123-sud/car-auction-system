@@ -1,0 +1,66 @@
+<!-- auction_detail.html -->
+{% extends 'base.html' %}
+{% block title %}Auction Details | Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Vehicle Image Section -->
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <img src="{{ vehicle.image.url }}" class="card-img-top" alt="{{ vehicle.title }}">
+                <div class="card-body">
+                    <h3 class="card-title">{{ vehicle.title }}</h3>
+                    <p class="text-muted">{{ vehicle.make }} - {{ vehicle.model }} ({{ vehicle.year }})</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auction Details Section -->
+        <div class="col-md-6">
+            <div class="card shadow-lg p-4">
+                <h4>Auction Details</h4>
+                <p><strong>Starting Bid:</strong> KSh {{ vehicle.price }}</p>
+                <p><strong>Current Highest Bid:</strong>
+                    {% if highest_bid %}
+                        KSh {{ highest_bid.amount }}
+                    {% else %}
+                        No bids yet
+                    {% endif %}
+                </p>
+                <p><strong>Auction Type:</strong> {{ vehicle.get_auction_type_display }}</p>
+                <p><strong>Description:</strong> {{ vehicle.description }}</p>
+
+                <!-- Place a Bid Form -->
+                <h5 class="mt-4">Place a Bid</h5>
+                <form method="POST" action="{% url 'bid_form' vehicle.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="bid_amount" class="form-label">Bid Amount (KSh)</label>
+                        <input type="number" class="form-control" id="bid_amount" name="bid_amount" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Submit Bid</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bidding History Section -->
+    <div class="mt-5">
+        <h4>Bidding History</h4>
+        {% if bids %}
+            <ul class="list-group">
+                {% for bid in bids %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><strong>{{ bid.user.username }}</strong> placed a bid</span>
+                        <span class="text-primary">KSh {{ bid.amount }}</span>
+                        <span class="text-muted">{{ bid.timestamp }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No bids placed yet. Be the first to bid!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

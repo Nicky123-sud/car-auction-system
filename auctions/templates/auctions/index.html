@@ -1,0 +1,116 @@
+<!-- index.html - Homepage for Car Auction System -->
+{% extends 'base.html' %}
+{% block title %}Home - Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Welcome to the Car Auction System</h2>
+    
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-md-8 offset-md-2">
+            <form method="GET" action="{% url 'search_vehicle' %}">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="query" placeholder="Search for a vehicle...">
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter & Sort Options -->
+    <div class="row mb-4">
+        <div class="col-md-8 offset-md-2">
+            <select class="form-select" id="sort-options">
+                <option value="price">Sort by Price</option>
+                <option value="model">Sort by Model</option>
+                <option value="end_time">Sort by Auction End Time</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Featured Vehicle Listings -->
+    <div class="row" id="vehicle-list">
+        {% for vehicle in vehicles %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm vehicle-card">
+                <img src="{{ vehicle.image.url }}" class="card-img-top img-fluid" alt="{{ vehicle.title }}" loading="lazy">
+                <div class="card-body">
+                    <h5 class="card-title">{{ vehicle.title }}</h5>
+                    <p class="card-text">Starting Price: Ksh {{ vehicle.starting_price }}</p>
+                    <p class="card-text">Auction Ends: {{ vehicle.auction_end_time }}</p>
+                    <p class="card-text" id="countdown-{{ vehicle.id }}"></p>
+                    <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-primary">View Details</a>
+                    <button class="btn btn-outline-danger" onclick="addToWishlist({{ vehicle.id }})">❤️ Save</button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center">No vehicles available for auction at the moment.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function startCountdown(endTime, elementId) {
+        function updateCountdown() {
+            let now = new Date().getTime();
+            let distance = new Date(endTime).getTime() - now;
+
+            if (distance < 0) {
+                document.getElementById(elementId).innerHTML = "Auction Ended";
+                return;
+            }
+
+            let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById(elementId).innerHTML = `Time Left: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+            setTimeout(updateCountdown, 1000);
+        }
+        updateCountdown();
+    }
+    
+    {% for vehicle in vehicles %}
+        startCountdown("{{ vehicle.auction_end_time|date:'c' }}", "countdown-{{ vehicle.id }}");
+    {% endfor %}
+
+    function addToWishlist(vehicleId) {
+        alert("Vehicle " + vehicleId + " added to wishlist!");
+        // Here, you can implement an AJAX request to save the vehicle to the user's wishlist.
+    }
+
+    document.getElementById('sort-options').addEventListener('change', function() {
+        let sortBy = this.value;
+        let vehicleList = document.getElementById('vehicle-list');
+        let vehicles = Array.from(vehicleList.children);
+        
+        vehicles.sort((a, b) => {
+            let valA, valB;
+            if (sortBy === 'price') {
+                valA = parseFloat(a.querySelector('.card-text').innerText.split(' ')[2]);
+                valB = parseFloat(b.querySelector('.card-text').innerText.split(' ')[2]);
+            } else if (sortBy === 'model') {
+                valA = a.querySelector('.card-title').innerText;
+                valB = b.querySelector('.card-title').innerText;
+            } else if (sortBy === 'end_time') {
+                valA = new Date(a.querySelectorAll('.card-text')[1].innerText.split(': ')[1]);
+                valB = new Date(b.querySelectorAll('.card-text')[1].innerText.split(': ')[1]);
+            }
+            return valA > valB ? 1 : -1;
+        });
+        
+        vehicleList.innerHTML = '';
+        vehicles.forEach(vehicle => vehicleList.appendChild(vehicle));
+    });
+</script>
+
+<style>
+    .vehicle-card:hover {
+        transform: scale(1.05);
+        transition: 0.3s ease-in-out;
+    }
+</style>
+{% endblock %}

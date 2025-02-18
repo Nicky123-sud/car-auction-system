@@ -1,0 +1,75 @@
+<!-- notifications.html -->
+{% extends 'base.html' %}
+
+{% block title %}Notifications | Car Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">📢 Your Notifications</h2>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <p class="text-muted">Stay updated with the latest activities.</p>
+        {% if notifications %}
+        <a href="{% url 'mark_all_as_read' %}" class="btn btn-sm btn-success">Mark All as Read</a>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-lg mt-4">
+        <div class="card-body">
+            {% if notifications %}
+                <ul class="list-group">
+                    {% for notification in notifications %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center
+                            {% if not notification.is_read %} bg-warning-subtle {% endif %}">
+                            <div>
+                                <strong>
+                                    {% if "bid" in notification.title|lower %}
+                                        🔥 {{ notification.title }}
+                                    {% elif "payment" in notification.title|lower %}
+                                        💰 {{ notification.title }}
+                                    {% else %}
+                                        📢 {{ notification.title }}
+                                    {% endif %}
+                                </strong>
+                                <p class="mb-0 text-muted">{{ notification.message }}</p>
+                                <small class="text-secondary">{{ notification.timestamp|date:"F d, Y - H:i A" }}</small>
+                            </div>
+                            {% if not notification.is_read %}
+                                <button class="btn btn-sm btn-primary mark-read-btn" data-id="{{ notification.id }}">Mark as Read</button>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-center text-muted">No notifications available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const buttons = document.querySelectorAll(".mark-read-btn");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function() {
+                const notificationId = this.getAttribute("data-id");
+
+                fetch(`/mark-as-read/${notificationId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/json"
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        this.closest(".list-group-item").classList.remove("bg-warning-subtle");
+                        this.remove();
+                    }
+                }).catch(error => console.error("Error:", error));
+            });
+        });
+    });
+</script>
+
+{% endblock %}

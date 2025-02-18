@@ -1,0 +1,211 @@
+{% extends 'base.html' %} {% block title %}Dashboard | Car Auction {% endlockb
+%} {% block content %}
+<div class="container mt-5">
+  <h2 class="text-center">Dashboard</h2>
+  <p>
+    Welcome to your dashboard. Here, you can manage your listings, view bids,
+    and manage your account.
+  </p>
+</div>
+
+<!--Dashboard Statistics -->
+<div class="row mt-4">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total Listings</h5>
+        <p class="card-text display-4 total-listings">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-success mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Active Bids</h5>
+        <p class="card-text display-4" id="active-bids">{{ active_bids }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-warning mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total Users</h5>
+        <p class="card-text display-4" id="total-users">{{ total_users }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-info mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Revenue (KES)</h5>
+        <p class="card-text display-4" id="total-revenue">
+          {{ total_revenue }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!--Chart Section -->
+  <div class="card mt-4">
+    <div class="card-header bg-dark text-white">
+      <h5>Auction Statistics /Performance</h5>
+    </div>
+    <div class="card-body">
+      <canvas id="auctionChart" width="400" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Active Listings with Filters -->
+  <div class="card mt-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between">
+      <span>Your Active Listings</span>
+      <input
+        type="text"
+        class="form-control w-25"
+        id="search-listings"
+        placeholder="Search..."
+      />
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="listings-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Current Bid</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for listing in listings %}
+          <tr>
+            <td>{{ listing.title }}</td>
+            <td>KSh {{ listing.current_bid }}</td>
+            <td>{{ listing.status }}</td>
+            <td>
+              <a
+                href="{% url 'auction_detail' listing.id %}"
+                class="btn btn-info btn-sm"
+                >View</a
+              >
+              <a
+                href="{% url 'edit_listing' listing.id %}"
+                class="btn btn-warning btn-sm"
+                >Edit</a
+              >
+              <a
+                href="{% url 'delete_listing' listing.id %}"
+                class="btn btn-danger btn-sm"
+                >Delete</a
+              >
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center">No active listings found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% comment %}
+<div class="row mt-4">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total Listings</h5>
+        <p class="card-text display-4 total-listings">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-success mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Active Bids</h5>
+        <p class="card-text display-4 active-bids">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-warning mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total Users</h5>
+        <p class="card-text display-4 total-users">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-white bg-dark mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total Revenue</h5>
+        <p class="card-text display-4 total-revenue">KSh 0</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auction Chart -->
+<div class="card mt-4">
+  <div class="card-header bg-dark text-white">Auction Type Distribution</div>
+  <div class="card-body">
+    <canvas id="auctionChart"></canvas>
+  </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endcomment %}
+
+<!-- Javascript for Charts and Real-time Updates -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    fetchDashboardData();
+
+    function fetchDashboardData() {
+      fetch("{% url 'dashboard_data' %}") // Fetch data from API
+        .then((response) => response.json())
+        .then((data) => {
+          // Update stats
+          document.querySelector(".total-listings").innerText =
+            data.total_listings;
+          document.querySelector(".active-bids").innerText = data.active_bids;
+          document.querySelector(".total-users").innerText = data.total_users;
+          document.querySelector(".total-revenue").innerText =
+            "KSh " + data.total_revenue;
+
+          // Update auction type chart
+          updateAuctionChart(data.auction_stats);
+        })
+        .catch((error) =>
+          console.error("Error fetching dashboard data:", error)
+        );
+    }
+
+    // Function to update auction statistics chart
+    function updateAuctionChart(auctionData) {
+      let ctx = document.getElementById("auctionChart").getContext("2d");
+      let labels = auctionData.map((item) => item.auction_type);
+      let values = auctionData.map((item) => item.count);
+
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: ["#007bff", "#28a745", "#ffc107", "#dc3545"],
+            },
+          ],
+        },
+      });
+    }
+  });
+</script>
+
+{% endblock %}
