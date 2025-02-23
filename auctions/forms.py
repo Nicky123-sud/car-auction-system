@@ -1,6 +1,17 @@
 from django import forms
 from .models import Listing
 from .models import Bid
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
+
+
+CustomUser = get_user_model()
+
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = ("username", "email")
+
 
 class ListingForm(forms.ModelForm):
     class Meta:
@@ -37,3 +48,4 @@ class BidForm(forms.ModelForm):
             raise forms.ValidationError("Your bid must be higher than the current highest bid.")
 
         return amount
+

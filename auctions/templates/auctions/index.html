@@ -1,116 +1,534 @@
-<!-- index.html - Homepage for Car Auction System -->
+{#<!-- index.html - Homepage for Car Auction System -->#}
+{#{% extends 'base.html' %}#}
+{#{% block title %}Home - Car Auction{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mt-5">#}
+{#    <h2 class="text-center mb-4">Welcome to the Car Auction System</h2>#}
+{#    #}
+{#    <!-- Search Bar -->#}
+{#    <div class="row mb-4">#}
+{#        <div class="col-md-8 offset-md-2">#}
+{#            <form method="GET" action="{% url 'search_vehicle' %}">#}
+{#                <div class="input-group">#}
+{#                    <input type="text" class="form-control" name="query" placeholder="Search for a vehicle...">#}
+{#                    <button class="btn btn-primary" type="submit">Search</button>#}
+{#                </div>#}
+{#            </form>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Filter & Sort Options -->#}
+{#    <div class="row mb-4">#}
+{#        <div class="col-md-8 offset-md-2">#}
+{#            <select class="form-select" id="sort-options">#}
+{#                <option value="price">Sort by Price</option>#}
+{#                <option value="model">Sort by Model</option>#}
+{#                <option value="end_time">Sort by Auction End Time</option>#}
+{#            </select>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Featured Vehicle Listings -->#}
+{#    <div class="row" id="vehicle-list">#}
+{#        {% for vehicle in vehicles %}#}
+{#        <div class="col-md-4 mb-4">#}
+{#            <div class="card shadow-sm vehicle-card">#}
+{#                <img src="{{ vehicle.image.url }}" class="card-img-top img-fluid" alt="{{ vehicle.title }}" loading="lazy">#}
+{#                <div class="card-body">#}
+{#                    <h5 class="card-title">{{ vehicle.title }}</h5>#}
+{#                    <p class="card-text">Starting Price: Ksh {{ vehicle.starting_price }}</p>#}
+{#                    <p class="card-text">Auction Ends: {{ vehicle.auction_end_time }}</p>#}
+{#                    <p class="card-text" id="countdown-{{ vehicle.id }}"></p>#}
+{#                    <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-primary">View Details</a>#}
+{#                    <button class="btn btn-outline-danger" onclick="addToWishlist({{ vehicle.id }})">❤️ Save</button>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        {% empty %}#}
+{#        <p class="text-center">No vehicles available for auction at the moment.</p>#}
+{#        {% endfor %}#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<script>#}
+{#    function startCountdown(endTime, elementId) {#}
+{#        function updateCountdown() {#}
+{#            let now = new Date().getTime();#}
+{#            let distance = new Date(endTime).getTime() - now;#}
+{##}
+{#            if (distance < 0) {#}
+{#                document.getElementById(elementId).innerHTML = "Auction Ended";#}
+{#                return;#}
+{#            }#}
+{##}
+{#            let days = Math.floor(distance / (1000 * 60 * 60 * 24));#}
+{#            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));#}
+{#            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));#}
+{#            let seconds = Math.floor((distance % (1000 * 60)) / 1000);#}
+{##}
+{#            document.getElementById(elementId).innerHTML = `Time Left: ${days}d ${hours}h ${minutes}m ${seconds}s`;#}
+{#            setTimeout(updateCountdown, 1000);#}
+{#        }#}
+{#        updateCountdown();#}
+{#    }#}
+{#    #}
+{#    {% for vehicle in vehicles %}#}
+{#        startCountdown("{{ vehicle.auction_end_time|date:'c' }}", "countdown-{{ vehicle.id }}");#}
+{#    {% endfor %}#}
+{##}
+{#    function addToWishlist(vehicleId) {#}
+{#        alert("Vehicle " + vehicleId + " added to wishlist!");#}
+{#        // Here, you can implement an AJAX request to save the vehicle to the user's wishlist.#}
+{#    }#}
+{##}
+{#    document.getElementById('sort-options').addEventListener('change', function() {#}
+{#        let sortBy = this.value;#}
+{#        let vehicleList = document.getElementById('vehicle-list');#}
+{#        let vehicles = Array.from(vehicleList.children);#}
+{#        #}
+{#        vehicles.sort((a, b) => {#}
+{#            let valA, valB;#}
+{#            if (sortBy === 'price') {#}
+{#                valA = parseFloat(a.querySelector('.card-text').innerText.split(' ')[2]);#}
+{#                valB = parseFloat(b.querySelector('.card-text').innerText.split(' ')[2]);#}
+{#            } else if (sortBy === 'model') {#}
+{#                valA = a.querySelector('.card-title').innerText;#}
+{#                valB = b.querySelector('.card-title').innerText;#}
+{#            } else if (sortBy === 'end_time') {#}
+{#                valA = new Date(a.querySelectorAll('.card-text')[1].innerText.split(': ')[1]);#}
+{#                valB = new Date(b.querySelectorAll('.card-text')[1].innerText.split(': ')[1]);#}
+{#            }#}
+{#            return valA > valB ? 1 : -1;#}
+{#        });#}
+{#        #}
+{#        vehicleList.innerHTML = '';#}
+{#        vehicles.forEach(vehicle => vehicleList.appendChild(vehicle));#}
+{#    });#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    .vehicle-card:hover {#}
+{#        transform: scale(1.05);#}
+{#        transition: 0.3s ease-in-out;#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+
+
+
+
 {% extends 'base.html' %}
-{% block title %}Home - Car Auction{% endblock %}
+{% load static %}
+
+{% block title %}CarVilla{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Welcome to the Car Auction System</h2>
-    
-    <!-- Search Bar -->
-    <div class="row mb-4">
-        <div class="col-md-8 offset-md-2">
-            <form method="GET" action="{% url 'search_vehicle' %}">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="query" placeholder="Search for a vehicle...">
-                    <button class="btn btn-primary" type="submit">Search</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<!-- Welcome Hero Section -->
+<section id="home" class="welcome-hero position-relative" style="height: 100vh;">
+  <!-- Full Width & Height Background Image -->
+  <div class="position-absolute top-0 start-0 w-100 h-100"
+       style="background: url({% static 'images/welcome-hero/welcome-banner.jpg' %}) center center/cover no-repeat; z-index: -2;"></div>
 
-    <!-- Filter & Sort Options -->
-    <div class="row mb-4">
-        <div class="col-md-8 offset-md-2">
-            <select class="form-select" id="sort-options">
-                <option value="price">Sort by Price</option>
-                <option value="model">Sort by Model</option>
-                <option value="end_time">Sort by Auction End Time</option>
-            </select>
-        </div>
-    </div>
+  <!-- Transparent Overlay -->
+  <div class="position-absolute top-0 start-0 w-100 h-100"
+       style="background: rgba(0, 0, 0, 0.3); z-index: -1;"></div>
 
-    <!-- Featured Vehicle Listings -->
-    <div class="row" id="vehicle-list">
-        {% for vehicle in vehicles %}
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm vehicle-card">
-                <img src="{{ vehicle.image.url }}" class="card-img-top img-fluid" alt="{{ vehicle.title }}" loading="lazy">
-                <div class="card-body">
-                    <h5 class="card-title">{{ vehicle.title }}</h5>
-                    <p class="card-text">Starting Price: Ksh {{ vehicle.starting_price }}</p>
-                    <p class="card-text">Auction Ends: {{ vehicle.auction_end_time }}</p>
-                    <p class="card-text" id="countdown-{{ vehicle.id }}"></p>
-                    <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-primary">View Details</a>
-                    <button class="btn btn-outline-danger" onclick="addToWishlist({{ vehicle.id }})">❤️ Save</button>
+  <!-- Content -->
+  <div class="container position-relative h-100 d-flex align-items-center">
+    <div class="row w-100">
+      <div class="col-12 text-center">
+        <div class="welcome-hero-txt">
+          <h2 class="display-4 text-white fw-bold">Find Your Dream Car at a Reasonable Price</h2>
+          <p class="lead text-white my-4">
+            Discover a wide selection of vehicles that suit your style and budget. Explore our collection and drive home your perfect car.
+          </p>
+          <a href="#contact" class="btn btn-primary btn-lg">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Add extra spacing between sections -->
+<div class="py-5"></div>
+
+<!-- Model Search Section -->
+<section id="model-search" class="py-5 bg-white shadow rounded position-relative" style="margin-top: 0; z-index: 2;">
+  <div class="container">
+    <form class="row g-3">
+      <div class="col-md-2 offset-md-1">
+        <label for="yearSelect" class="form-label">Select Year</label>
+        <select class="form-select" id="yearSelect" name="year">
+          <option selected value="default">Year</option>
+          <option value="2018">2018</option>
+          <option value="2017">2017</option>
+          <option value="2016">2016</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="bodyStyleSelect" class="form-label">Body Style</label>
+        <select class="form-select" id="bodyStyleSelect" name="body_style">
+          <option selected value="default">Style</option>
+          <option value="sedan">Sedan</option>
+          <option value="van">Van</option>
+          <option value="roadster">Roadster</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="makeSelect" class="form-label">Select Make</label>
+        <select class="form-select" id="makeSelect" name="make">
+          <option selected value="default">Make</option>
+          <option value="toyota">Toyota</option>
+          <option value="holden">Holden</option>
+          <option value="maecedes-benz">Mercedes-Benz</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="conditionSelect" class="form-label">Car Condition</label>
+        <select class="form-select" id="conditionSelect" name="condition">
+          <option selected value="default">Condition</option>
+          <option value="new">New</option>
+          <option value="used">Used</option>
+          <option value="certified">Certified</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="modelSelect" class="form-label">Select Model</label>
+        <select class="form-select" id="modelSelect" name="model">
+          <option selected value="default">Model</option>
+          <option value="kia-rio">Kia Rio</option>
+          <option value="mitsubishi">Mitsubishi</option>
+          <option value="ford">Ford</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="priceSelect" class="form-label">Select Price</label>
+        <select class="form-select" id="priceSelect" name="price">
+          <option selected value="default">Price</option>
+          <option value="$0.00">$0.00</option>
+          <option value="$10,000">$10,000</option>
+          <option value="$20,000">$20,000</option>
+        </select>
+      </div>
+      <div class="col-12 text-center">
+        <button type="submit" class="btn btn-primary mt-3">Search</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Service Section -->
+<section id="service" class="py-5">
+  <div class="container">
+    <div class="row text-center">
+      <div class="col-md-4 mb-4">
+        <div class="p-4 border rounded">
+          <i class="flaticon-car display-4 text-primary"></i>
+          <h4 class="mt-3">Largest Dealership</h4>
+          <p class="text-muted">We offer the widest range of vehicles to suit every taste and budget.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="p-4 border rounded">
+          <i class="flaticon-car-repair display-4 text-primary"></i>
+          <h4 class="mt-3">Unlimited Repair Warranty</h4>
+          <p class="text-muted">Enjoy a comprehensive repair warranty with every purchase.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="p-4 border rounded">
+          <i class="flaticon-car-1 display-4 text-primary"></i>
+          <h4 class="mt-3">Insurance Support</h4>
+          <p class="text-muted">Benefit from our expert insurance support and drive with confidence.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- New Cars Section -->
+<section id="new-cars" class="new-cars py-5 bg-light">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <p class="text-muted">Check out <span class="text-primary">the</span> latest cars</p>
+      <h2 class="display-5 fw-bold">Newest Cars</h2>
+    </div>
+    <div class="new-cars-content">
+      <!-- Owl Carousel container; ensure Owl Carousel assets and initialization are included -->
+      <div class="owl-carousel owl-theme" id="new-cars-carousel">
+        <!-- New Cars Item 1 -->
+        <div class="new-cars-item">
+          <div class="single-new-cars-item">
+            <div class="row align-items-center">
+              <div class="col-md-7 col-sm-12">
+                <div class="new-cars-img">
+                  <img src="{% static 'images/new-cars-model/ncm1.png' %}" alt="Chevrolet Camaro" class="img-fluid">
                 </div>
+              </div>
+              <div class="col-md-5 col-sm-12">
+                <div class="new-cars-txt">
+                  <h2><a href="#" class="text-decoration-none">Chevrolet Camaro <span class="text-primary">ZA100</span></a></h2>
+                  <p>Experience exceptional performance and style with this iconic vehicle.</p>
+                  <p class="new-cars-para2">Designed for enthusiasts who demand both power and luxury.</p>
+                  <button class="btn btn-primary new-cars-btn" onclick="window.location.href='#'">View Details</button>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
-        {% empty %}
-        <p class="text-center">No vehicles available for auction at the moment.</p>
-        {% endfor %}
+        <!-- New Cars Item 2 -->
+        <div class="new-cars-item">
+          <div class="single-new-cars-item">
+            <div class="row align-items-center">
+              <div class="col-md-7 col-sm-12">
+                <div class="new-cars-img">
+                  <img src="{% static 'images/new-cars-model/ncm2.png' %}" alt="BMW Series-3 Wagon" class="img-fluid">
+                </div>
+              </div>
+              <div class="col-md-5 col-sm-12">
+                <div class="new-cars-txt">
+                  <h2><a href="#" class="text-decoration-none">BMW Series-3 Wagon</a></h2>
+                  <p>Enjoy unmatched sophistication and performance in this premium model.</p>
+                  <p class="new-cars-para2">Built with advanced features for a refined driving experience.</p>
+                  <button class="btn btn-primary new-cars-btn" onclick="window.location.href='#'">View Details</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- New Cars Item 3 -->
+        <div class="new-cars-item">
+          <div class="single-new-cars-item">
+            <div class="row align-items-center">
+              <div class="col-md-7 col-sm-12">
+                <div class="new-cars-img">
+                  <img src="{% static 'images/new-cars-model/ncm3.png' %}" alt="Ferrari 488 Superfast" class="img-fluid">
+                </div>
+              </div>
+              <div class="col-md-5 col-sm-12">
+                <div class="new-cars-txt">
+                  <h2><a href="#" class="text-decoration-none">Ferrari 488 Superfast</a></h2>
+                  <p>Experience the thrill of Italian engineering and high performance.</p>
+                  <p class="new-cars-para2">A masterpiece combining elegance with top-tier speed.</p>
+                  <button class="btn btn-primary new-cars-btn" onclick="window.location.href='#'">View Details</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- End Owl Carousel -->
+    </div><!--/.new-cars-content-->
+  </div>
+</section>
+<!-- End New Cars Section -->
+
+<!-- Featured Cars Section -->
+<section id="featured-cars" class="py-5">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <p class="text-muted">Explore <span class="text-primary">our</span> featured cars</p>
+      <h2 class="display-5 fw-bold">Featured Cars</h2>
     </div>
-</div>
+    <div class="row g-4">
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="{% static 'images/featured-cars/fc1.png' %}" class="card-img-top" alt="BMW 6-Series Gran Coupe">
+          <div class="card-body">
+            <p class="mb-1 small text-muted">Model: 2017 • 3100 mi • 240HP • Automatic</p>
+            <h5 class="card-title">BMW 6-Series Gran Coupe</h5>
+            <h6 class="text-primary">$89,395</h6>
+            <p class="card-text small text-muted">A stylish and high-performance car designed for discerning drivers.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="{% static 'images/featured-cars/fc4.png' %}" class="card-img-top" alt="Infiniti Z5">
+          <div class="card-body">
+            <p class="mb-1 small text-muted">Model: 2017 • 3100 mi • 240HP • Automatic</p>
+            <h5 class="card-title">Infiniti <span class="text-primary">Z5</span></h5>
+            <h6 class="text-primary">$36,850</h6>
+            <p class="card-text small text-muted">A perfect blend of luxury and performance.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Repeat additional featured car cards as needed -->
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="{% static 'images/featured-cars/fc2.png' %}" class="card-img-top" alt="Chevrolet Camaro wmv20">
+          <div class="card-body">
+            <p class="mb-1 small text-muted">Model: 2017 • 3100 mi • 240HP • Automatic</p>
+            <h5 class="card-title">Chevrolet Camaro <span class="text-primary">WMV20</span></h5>
+            <h6 class="text-primary">$66,575</h6>
+            <p class="card-text small text-muted">A modern muscle car that delivers on both style and performance.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="{% static 'images/featured-cars/fc3.png' %}" class="card-img-top" alt="Lamborghini V520">
+          <div class="card-body">
+            <p class="mb-1 small text-muted">Model: 2017 • 3100 mi • 240HP • Automatic</p>
+            <h5 class="card-title">Lamborghini <span class="text-primary">V520</span></h5>
+            <h6 class="text-primary">$125,250</h6>
+            <p class="card-text small text-muted">An exotic supercar that redefines luxury and performance.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="{% static 'images/featured-cars/fc7.png' %}" class="card-img-top" alt="BMW 8-Series Coupe">
+          <div class="card-body">
+            <p class="mb-1 small text-muted">Model: 2017 • 3100 mi • 240HP • Automatic</p>
+            <h5 class="card-title">BMW <span class="text-primary">8-Series Coupe</span></h5>
+            <h6 class="text-primary">$56,000</h6>
+            <p class="card-text small text-muted">A luxurious coupe designed for high performance and elegance.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="{% static 'images/featured-cars/fc8.png' %}" class="card-img-top" alt="BMW X-Series 6">
+          <div class="card-body">
+            <p class="mb-1 small text-muted">Model: 2017 • 3100 mi • 240HP • Automatic</p>
+            <h5 class="card-title">BMW <span class="text-primary">X-Series 6</span></h5>
+            <h6 class="text-primary">$75,800</h6>
+            <p class="card-text small text-muted">A dynamic blend of technology and performance in a sleek design.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-<script>
-    function startCountdown(endTime, elementId) {
-        function updateCountdown() {
-            let now = new Date().getTime();
-            let distance = new Date(endTime).getTime() - now;
+<!-- Clients Say Section -->
+<section id="clients-say" class="py-5 bg-light">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="display-5 fw-bold">What Our Clients Say</h2>
+    </div>
+    <div class="owl-carousel testimonial-carousel">
+      <div class="item text-center">
+        <img src="{% static 'images/clients/c1.png' %}" alt="Client" class="rounded-circle mb-3" style="width:70px; height:70px;">
+        <p class="text-muted">"This service is exceptional! I found my dream car quickly and easily."</p>
+        <h5 class="mt-3">Tomas Lili</h5>
+        <p class="small text-muted">New York, USA</p>
+      </div>
+      <!-- Repeat additional testimonial items as needed -->
+    </div>
+  </div>
+</section>
 
-            if (distance < 0) {
-                document.getElementById(elementId).innerHTML = "Auction Ended";
-                return;
-            }
+<!-- Brand Section -->
+<section id="brand" class="py-5">
+  <div class="container">
+    <div class="owl-carousel owl-theme brand-item">
+      <div class="item">
+        <a href="#"><img src="{% static 'images/brand/br1.png' %}" alt="Brand" class="img-fluid"></a>
+      </div>
+      <div class="item">
+        <a href="#"><img src="{% static 'images/brand/br2.png' %}" alt="Brand" class="img-fluid"></a>
+      </div>
+      <div class="item">
+        <a href="#"><img src="{% static 'images/brand/br3.png' %}" alt="Brand" class="img-fluid"></a>
+      </div>
+      <div class="item">
+        <a href="#"><img src="{% static 'images/brand/br4.png' %}" alt="Brand" class="img-fluid"></a>
+      </div>
+      <div class="item">
+        <a href="#"><img src="{% static 'images/brand/br5.png' %}" alt="Brand" class="img-fluid"></a>
+      </div>
+      <div class="item">
+        <a href="#"><img src="{% static 'images/brand/br6.png' %}" alt="Brand" class="img-fluid"></a>
+      </div>
+    </div>
+  </div>
+</section>
 
-            let days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+<!-- Blog Section (Coming Soon) -->
+<section id="blog" class="py-5">
+  <div class="container text-center">
+    <h2 class="display-5 fw-bold">Blog</h2>
+    <p class="text-muted">Coming Soon...</p>
+  </div>
+</section>
 
-            document.getElementById(elementId).innerHTML = `Time Left: ${days}d ${hours}h ${minutes}m ${seconds}s`;
-            setTimeout(updateCountdown, 1000);
-        }
-        updateCountdown();
-    }
-    
-    {% for vehicle in vehicles %}
-        startCountdown("{{ vehicle.auction_end_time|date:'c' }}", "countdown-{{ vehicle.id }}");
-    {% endfor %}
-
-    function addToWishlist(vehicleId) {
-        alert("Vehicle " + vehicleId + " added to wishlist!");
-        // Here, you can implement an AJAX request to save the vehicle to the user's wishlist.
-    }
-
-    document.getElementById('sort-options').addEventListener('change', function() {
-        let sortBy = this.value;
-        let vehicleList = document.getElementById('vehicle-list');
-        let vehicles = Array.from(vehicleList.children);
-        
-        vehicles.sort((a, b) => {
-            let valA, valB;
-            if (sortBy === 'price') {
-                valA = parseFloat(a.querySelector('.card-text').innerText.split(' ')[2]);
-                valB = parseFloat(b.querySelector('.card-text').innerText.split(' ')[2]);
-            } else if (sortBy === 'model') {
-                valA = a.querySelector('.card-title').innerText;
-                valB = b.querySelector('.card-title').innerText;
-            } else if (sortBy === 'end_time') {
-                valA = new Date(a.querySelectorAll('.card-text')[1].innerText.split(': ')[1]);
-                valB = new Date(b.querySelectorAll('.card-text')[1].innerText.split(': ')[1]);
-            }
-            return valA > valB ? 1 : -1;
-        });
-        
-        vehicleList.innerHTML = '';
-        vehicles.forEach(vehicle => vehicleList.appendChild(vehicle));
-    });
-</script>
-
-<style>
-    .vehicle-card:hover {
-        transform: scale(1.05);
-        transition: 0.3s ease-in-out;
-    }
-</style>
-{% endblock %}
+<!-- Contact / Footer Section -->
+<footer id="contact" class="py-5 bg-dark text-white">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3">
+        <h5 class="mb-3">CarVilla</h5>
+        <p>We provide a wide range of vehicles at competitive prices. Contact us for more information.</p>
+        <p class="small">info@themesine.com</p>
+        <p class="small">+1 (885) 2563154554</p>
+      </div>
+      <div class="col-md-2">
+        <h6>About Us</h6>
+        <ul class="list-unstyled">
+          <li><a href="#" class="text-white">Company Info</a></li>
+          <li><a href="#" class="text-white">Careers</a></li>
+          <li><a href="#" class="text-white">Terms of Service</a></li>
+          <li><a href="#" class="text-white">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3">
+        <h6>Top Brands</h6>
+        <div class="row">
+          <div class="col-6">
+            <ul class="list-unstyled">
+              <li><a href="#" class="text-white">BMW</a></li>
+              <li><a href="#" class="text-white">Lamborghini</a></li>
+              <li><a href="#" class="text-white">Camaro</a></li>
+              <li><a href="#" class="text-white">Audi</a></li>
+              <li><a href="#" class="text-white">Infiniti</a></li>
+              <li><a href="#" class="text-white">Nissan</a></li>
+            </ul>
+          </div>
+          <div class="col-6">
+            <ul class="list-unstyled">
+              <li><a href="#" class="text-white">Ferrari</a></li>
+              <li><a href="#" class="text-white">Porsche</a></li>
+              <li><a href="#" class="text-white">Land Rover</a></li>
+              <li><a href="#" class="text-white">Aston Martin</a></li>
+              <li><a href="#" class="text-white">Mercedes</a></li>
+              <li><a href="#" class="text-white">Opel</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h6>Newsletter</h6>
+        <p>Subscribe to receive the latest news and updates.</p>
+        <form class="d-flex">
+          <input type="email" class="form-control me-2" placeholder="Enter your email">
+          <button class="btn btn-outline-light" type="submit"><i class="fa fa-arrow-right"></i></button>
+        </form>
+      </div>
+    </div>
+    <hr class="border-light my-4">
+    <div class="row">
+      <div class="col-md-6">
+        <p class="small mb-0">&copy; Copyright. Designed and developed by <a href="https://www.themesine.com/" class="text-white">ThemeSine</a>.</p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <div class="footer-social">
+          <a href="#" class="text-white me-2"><i class="fa fa-facebook"></i></a>
+          <a href="#" class="text-white me-2"><i class="fa fa-instagram"></i></a>
+          <a href="#" class="text-white me-2"><i class="fa fa-linkedin"></i></a>
+          <a href="#" class="text-white me-2"><i class="fa fa-pinterest-p"></i></a>
+          <a href="#" class="text-white"><i class="fa fa-behance"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Scroll-to-Top Button -->
+  <div id="scroll-Top" class="position-fixed bottom-0 end-0 m-3" style="display: none;">
+    <button class="btn btn-primary rounded-circle">
+      <i class="fa fa-arrow-up"></i>
+    </button>
+  </div>
+</footer>
+{% endblock content %}

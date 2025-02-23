@@ -5,6 +5,7 @@ import json
 
 import requests
 from django.conf import settings
+from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 
@@ -42,10 +43,13 @@ from django.http import JsonResponse
 from django.utils.timezone import now
 from django.contrib.auth.decorators import login_required
 from .models import Vehicle
-from .forms import ListingForm
+from .forms import ListingForm, CustomUserCreationForm
 from django.contrib.auth import get_user_model
 CustomUser = get_user_model()
 from django.db.models import Max, Count
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.forms import UserCreationForm
 
 # ✅ Endpoints:
 #
@@ -67,6 +71,8 @@ class RegisterView(generics.CreateAPIView):
                 'user': UserSerializer(user).data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 # ✅ User Login (JWT Authentication)
 class LoginView(APIView):
     def post(self, request):
@@ -247,17 +253,37 @@ def buy_now(request, vehicle_id):
 def home(request):
     return render(request, 'auctions/home.html')
 
-def login(request):
+
+def register_view(request):
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Log the user in after successful registration
+            auth_login(request, user)
+            return redirect('login')  # Redirect to home or any dashboard after registration
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'auctions/register.html', {'form': form})
+
+def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('home')
-        else:
-            return render(request, 'auctions/login.html', {'error': 'Invalid username or password'})
-        return render(request, 'login.html')
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = request.POST['username']
+            password = request.POST['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                auth_login(request, user)
+                return redirect('home')
+            else:
+                return render(request, 'auctions/login.html', {'error': 'Invalid username or password'})
+    else:
+        form = AuthenticationForm()
+
+    return render(request, 'auctions/login.html', {'form': form})
+
     
     
 def vehicle_detail(request, vehicle_id):
@@ -274,7 +300,6 @@ def vehicle_detail(request, vehicle_id):
         return render(request, 'auctions/vehicle_detail.html', {'error': 'Vehicle not found'})
 
 
-
 @login_required
 def dashboard(request):
     # Count total listings
@@ -289,10 +314,10 @@ def dashboard(request):
     # Revenue statistics (assuming you store final sale prices in Bid)
     total_revenue = Bid.objects.aggregate(total=Max('amount'))['total'] or 0
 
-    # Auction statistics for chart
+    # Auction statistics for chart, using 'status' as a valid field
     auction_stats = (
         Vehicle.objects
-        .values('auction_type')
+        .values('status')
         .annotate(count=Count('id'))
     )
 
@@ -306,6 +331,7 @@ def dashboard(request):
     }
 
     return JsonResponse(data)
+
 
 
 # M-pesa Credentials
@@ -508,3 +534,11 @@ def process_buy_now(request, vehicle_id):
         return redirect("dashboard")
 
     return render(request, "buy_now.html", {"vehicle": vehicle})
+
+
+
+
+
+
+
+

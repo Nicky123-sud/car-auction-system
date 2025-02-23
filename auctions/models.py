@@ -5,7 +5,7 @@ from django.db.models import Max
 from django.http import JsonResponse
 # from .models import Vehicle, Bid
 from django.contrib.auth.models import User
-
+from django.conf import settings
 from django.db import models
 
 # Create your models here.
@@ -54,36 +54,31 @@ class Vehicle(models.Model):
 # Bid Model
 
 class Bid(models.Model):
-
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='bids')
     bidder = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     bid_time = models.DateTimeField(auto_now_add=True)
-    # bidder = models.ForeignKey(User, on_delete=models.CASCADE)
-    # vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
-    # amount = models.DecimalField(max_digits=10, decimal_places=2)
     max_bid_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Proxy Bidding
 
     def __str__(self):
-        return f"{self.bidder.username} - Amount: {self.bid_amount} on {self.vehicle}"
-
-    def __str__(self):
         return f"{self.bidder} - {self.vehicle.title} - {self.amount}"
+
 
 # ✅ Stores max bid amount for proxy bidding.
 # ✅ Adds "Buy Now" price to vehicles.
 # After an auction ends the winning bidder must make a payment
 
 class Payment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_status = models.CharField(max_length=10, choices=[('pending','pending'), ('completed', 'completed')], default='pending')
+    payment_status = models.CharField(max_length=10, choices=[('pending', 'pending'), ('completed', 'completed')], default='pending')
     transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     payment_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Payment of {self.amount} for {self.vehicle} - {self.payment_status}"
+
     
     
     
@@ -124,6 +119,7 @@ def place_bid(request, vehicle_id):
 
 
 
+
 class Listing(models.Model):
     title = models.CharField(max_length=200)
     make = models.CharField(max_length=100)
@@ -135,7 +131,7 @@ class Listing(models.Model):
     image = models.ImageField(upload_to='listings/', null=True, blank=True)
     is_sold = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=[('Available', 'Available'), ('Sold', 'Sold')], default='Available')
-    seller = models.ForeignKey('auth.User', on_delete=models.CASCADE)  # Assuming you use the default User model
+    seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Corrected reference to custom user model
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

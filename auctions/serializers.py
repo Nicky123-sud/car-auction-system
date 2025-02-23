@@ -8,32 +8,52 @@ from .models import Vehicle, Bid, Payment, User
 #
 # User registration
 # Login authentication
+
 user = get_user_model()
+
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)  # Password should be write-only
+
     class Meta:
         model = user
-        fields = ['id', 'username', 'email', 'phone_number', 'user_type']
+        fields = ['id', 'username', 'email', 'phone_number', 'password', 'user_type']
+
+def create(self, validated_data):
+    user = user.objects.create_user(
+        username=validated_data['username'],
+        email=validated_data['email'],
+        phone_number=validated_data['phone_number'],
+        password=validated_data['password'],
+        user_type=validated_data('user_type', 'buyer')
+    )
+    return user
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)  # Password should be write-only
 
     class Meta:
         model = user
-        fields = ['id', 'username', 'email', 'phone_number', 'password']
+        fields = ['id', 'username', 'email', 'phone_number', 'password', 'user_type']
 
     def create(self, validated_data):
-        user = User.objects.create_user(
+        # Use .get() to safely retrieve 'user_type', defaulting to 'buyer' if it's not present
+        user_type = validated_data.get('user_type', 'buyer')
+
+        # Create the user with the validated data
+        user = user.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             phone_number=validated_data['phone_number'],
             password=validated_data['password'],
-            user_type=validated_data['user_type']
+            user_type=validated_data.get('user_type', 'buyer')
         )
         return user
+
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+
 
 
 # Vehicle Serializer
